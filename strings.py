@@ -276,6 +276,98 @@ def longestCommonSubstring(st1, st2):
     string2 = str(st2)
 
 
+# Left rotation of n spaces
+def leftRotate(st, n):
+    return st[n:] + st[:n]
+
+
+# Burrows-Wheelers encoder
+def burrowsWheelerEncoder(st1):
+    st1 += "$"
+    stringToReturn = ""
+    array = []
+
+    for i in range(len(st1)):
+        if i != 0:
+            st1 = leftRotate(st1, 1)
+        array.append(st1)
+
+    array.sort()
+
+    for i in range(len(st1)):
+        stringToReturn += array[i][len(st1) - 1]
+
+    print("BWT of given string is:")
+    print(stringToReturn)
+
+
+# Burrows-Wheelers decoder using FM index -> can be optimized
+def burrowsWheelerDecoder(st1):
+    cTab = []
+    LF = []
+    fIndex = sorted(st1)
+    lIndex = list(st1)
+    alphabet = []
+    toBeReturned = list()
+
+    class C_Cell:
+        letter = ''
+        posOcc = 0
+
+    currChar = ''
+    numChar = 0
+
+    # C(c) building
+    for i in range(len(st1)):
+        if fIndex[i] != currChar:
+            currChar = fIndex[i]
+            cTab.append(C_Cell())
+            cTab[numChar].letter = currChar
+            cTab[numChar].posOcc = i
+            alphabet.append(currChar)
+            numChar += 1
+
+    # Occurrences table building
+    alphabet = sorted(alphabet)
+    occTable = [[] for i in range(len(alphabet))]
+
+    for i in range(len(alphabet)):
+        for j in range(len(st1)):
+            occTable[i].append(0)
+
+    for i in range(len(alphabet)):
+        for j in range(len(st1)):
+            if alphabet[i] == st1[j]:
+                if j != 0:
+                    occTable[i][j] = occTable[i][j - 1] + 1
+                else:
+                    occTable[i][j] = 1
+            else:
+                occTable[i][j] = occTable[i][j - 1]
+
+    ind = 0
+    for i in range(len(st1)):
+        for j in range(len(cTab)):
+            if st1[i] == cTab[j].letter:
+                ind = j
+                break
+        LF.append(cTab[ind].posOcc + occTable[ind][i])
+
+    for i in range(len(LF)):
+        LF[i] -= 1
+
+    toBeReturned.append('$')
+    fRow = lIndex.index('$')
+    for i in range(len(lIndex)):
+        fRow = LF[fRow]
+        if lIndex[fRow] != '$':
+            toBeReturned.append(lIndex[fRow])
+
+    toBeReturned = ''.join(toBeReturned)
+    toBeReturned = toBeReturned[::-1]
+    print(toBeReturned)
+
+
 # Main body
 while 1:
     print("Please select operation:")
@@ -283,7 +375,8 @@ while 1:
     print("2 - Local sequence alignment")
     print("3 - Longest common subsequence")
     print("4 - Longest common substring")
-    print("5 - Exit")
+    print("5 - Burrows-Wheeler transform")
+    print("6 - Exit")
 
     try:
         op = int(input("> "))
@@ -343,6 +436,33 @@ while 1:
             longestCommonSubstring(s1, s2)
 
         elif int(op) == 5:
+            print("Do you want to perform string to BWT (1) or vice-versa (2)?")
+            choice = input("> ")
+            try:
+                if int(choice) == 1:
+                    print(
+                        "Insert string without terminator character ($), terminator character is AUTOMATICALLY appended!")
+                    s1 = input("> ")
+                    try:
+                        s1 = str(s1)
+                    except ValueError:
+                        print("Please, insert valid string")
+                        continue
+                    burrowsWheelerEncoder(s1)
+                elif int(choice) == 2:
+                    print("Insert BWT (be sure that terminator character $ is included)")
+                    s1 = input("> ")
+                    try:
+                        s1 = str(s1)
+                    except ValueError:
+                        print("Please, insert valid string")
+                        continue
+                    burrowsWheelerDecoder(s1)
+            except ValueError:
+                print("Please, insert valid string")
+                continue
+
+        elif int(op) == 6:
             print("Goodbye!")
             exit(0)
 
