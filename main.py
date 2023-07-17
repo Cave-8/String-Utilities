@@ -268,6 +268,7 @@ def longestCommonSubsequence(st1, st2):
     return
 
 
+# TODO
 # Given two strings it returns the longest common substring shared by them
 def longestCommonSubstring(st1, st2):
     print("Test")
@@ -327,6 +328,7 @@ while 1:
                 continue
             longestCommonSubsequence(s1, s2)
 
+        # TODO
         elif int(op) == 4:
             print("Insert first string")
             s1 = input("> ")
