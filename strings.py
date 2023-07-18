@@ -10,7 +10,8 @@ class MatrixCell:
 # Print result of backtracking according to mode:
 # GSA -> global sequence alignment
 # LSA -> local sequence alignment
-# LCS -> longest common subsequence
+# LCS-SEQ -> longest common subsequence
+# LCS-ST -> longest common substring
 def backtracking(matrix, rowsNum, colsNum, string1, string2, mode):
     if mode == "GSA":
         currEl = matrix[rowsNum - 1][colsNum - 1]
@@ -102,7 +103,7 @@ def backtracking(matrix, rowsNum, colsNum, string1, string2, mode):
         print(alignedString2)
         print("Score:", finalScore)
 
-    elif mode == "LCS":
+    elif mode == "LCS-SEQ":
         lcs = ""
         currRow = rowsNum - 1
         currCol = colsNum - 1
@@ -126,7 +127,39 @@ def backtracking(matrix, rowsNum, colsNum, string1, string2, mode):
 
         # Print result
         lcs = lcs[::-1]
-        print("Longest common subsequence:", lcs)
+        if len(lcs) > 0:
+            print("Longest common subsequence:", lcs)
+        else:
+            print("No common subsequence")
+
+    elif mode == "LCS-ST":
+        lcs = ""
+        currRow = rowsNum - 1
+        currCol = colsNum - 1
+        currEl = matrix[0][0]
+
+        for i in range(rowsNum):
+            for j in range(colsNum):
+                if matrix[i][j].value > currEl.value:
+                    currEl = matrix[i][j]
+                    currRow = i
+                    currCol = j
+
+        while 1:
+            if currEl.value == 0:
+                break
+            else:
+                lcs += string1[currRow-1]
+                currEl = matrix[currRow-1][currCol-1]
+                currRow -= 1
+                currCol -= 1
+
+        # Print result
+        lcs = lcs[::-1]
+        if len(lcs) > 0:
+            print("Longest common substring:", lcs)
+        else:
+            print("No common substring")
 
 
 # Assign direction given backtrack tuple
@@ -152,7 +185,7 @@ def globalSequenceAlignment(st1, st2):
     rowsNum = len(string1) + 1
     colsNum = len(string2) + 1
 
-    matrix = [[] for i in range(rowsNum)]
+    matrix = [[] for _ in range(rowsNum)]
     for i in range(rowsNum):
         for j in range(colsNum):
             matrix[i].append(MatrixCell())
@@ -193,7 +226,7 @@ def localSequenceAlignment(st1, st2):
     rowsNum = len(string1) + 1
     colsNum = len(string2) + 1
 
-    matrix = [[] for i in range(rowsNum)]
+    matrix = [[] for _ in range(rowsNum)]
     for i in range(rowsNum):
         for j in range(colsNum):
             matrix[i].append(MatrixCell())
@@ -234,7 +267,7 @@ def longestCommonSubsequence(st1, st2):
     rowsNum = len(string1) + 1
     colsNum = len(string2) + 1
 
-    matrix = [[] for i in range(rowsNum)]
+    matrix = [[] for _ in range(rowsNum)]
     for i in range(rowsNum):
         for j in range(colsNum):
             matrix[i].append(MatrixCell())
@@ -264,16 +297,50 @@ def longestCommonSubsequence(st1, st2):
                 matrix[i][j].backtracking = assignDirection(backtrack)
 
     # Backtracking
-    backtracking(matrix, rowsNum, colsNum, string1, string2, "LCS")
+    backtracking(matrix, rowsNum, colsNum, string1, string2, "LCS-SUB")
     return
 
 
-# TODO
 # Given two strings it returns the longest common substring shared by them
+# Can be optimized using suffix tree (from O(len1 * len2) to O(len1 + len2))
 def longestCommonSubstring(st1, st2):
-    print("Test")
-    string1 = str(st1)
-    string2 = str(st2)
+    string1 = str(st1).upper()
+    string2 = str(st2).upper()
+    rowsNum = len(string1) + 1
+    colsNum = len(string2) + 1
+
+    matrix = [[] for _ in range(rowsNum)]
+    for i in range(rowsNum):
+        for j in range(colsNum):
+            matrix[i].append(MatrixCell())
+
+    # Matrix initialization
+    for i in range(rowsNum):
+        matrix[i][0].value = 0 * i
+        matrix[i][0].backtracking = "UP"
+    for j in range(colsNum):
+        matrix[0][j].value = 0 * j
+        matrix[0][j].backtracking = "LEFT"
+
+    for i in range(rowsNum):
+        for j in range(colsNum):
+            if i == 0 or j == 0:
+                continue
+            else:
+                left = matrix[i][j - 1].value
+                up = matrix[i - 1][j].value
+                diag = matrix[i - 1][j - 1].value
+                if string1[i - 1] == string2[j - 1]:
+                    matrix[i][j].value = max(0, diag + 1)
+                else:
+                    matrix[i][j].value = 0
+
+                backtrack = left, up, diag
+                matrix[i][j].backtracking = assignDirection(backtrack)
+
+    # Backtracking
+    backtracking(matrix, rowsNum, colsNum, string1, string2, "LCS-ST")
+    return
 
 
 # Left rotation of n spaces
@@ -329,7 +396,7 @@ def burrowsWheelerDecoder(st1):
 
     # Occurrences table building
     alphabet = sorted(alphabet)
-    occTable = [[] for i in range(len(alphabet))]
+    occTable = [[] for _ in range(len(alphabet))]
 
     for i in range(len(alphabet)):
         for j in range(len(st1)):
